@@ -46,6 +46,7 @@ pub trait DataComponentImpl: Send + Sync {
 pub fn read_data(id: DataComponent, data: &NbtTag) -> Option<Box<dyn DataComponentImpl>> {
     match id {
         MaxStackSize => Some(MaxStackSizeImpl::read_data(data)?.to_dyn()),
+        ItemModel => Some(ItemModelImpl::read_data(data)?.to_dyn()),
         Enchantments => Some(EnchantmentsImpl::read_data(data)?.to_dyn()),
         Damage => Some(DamageImpl::read_data(data)?.to_dyn()),
         Unbreakable => Some(UnbreakableImpl::read_data(data)?.to_dyn()),
@@ -193,6 +194,11 @@ impl DataComponentImpl for ItemNameImpl {
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ItemModelImpl {
     pub model: String,
+}
+impl ItemModelImpl {
+    fn read_data(data: &NbtTag) -> Option<Self> {
+        data.extract_string().map(|s| Self { model: s.to_string() })
+    }
 }
 impl DataComponentImpl for ItemModelImpl {
     fn write_data(&self) -> NbtTag {
