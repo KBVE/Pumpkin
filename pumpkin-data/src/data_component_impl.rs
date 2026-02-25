@@ -4,8 +4,8 @@ use crate::attributes::Attributes;
 use crate::data_component::DataComponent;
 use crate::data_component::DataComponent::{
     AttributeModifiers, BlocksAttacks, Consumable, CustomData, CustomName, Damage, DamageResistant,
-    DeathProtection, Enchantments, Equippable, FireworkExplosion, Fireworks, Food, ItemName,
-    JukeboxPlayable, MaxDamage, MaxStackSize, PotionContents, Tool, Unbreakable,
+    DeathProtection, Enchantments, Equippable, FireworkExplosion, Fireworks, Food, ItemModel,
+    ItemName, JukeboxPlayable, MaxDamage, MaxStackSize, PotionContents, Tool, Unbreakable,
 };
 use crate::entity_type::EntityType;
 use crate::tag::{Tag, Taggable};
@@ -46,6 +46,7 @@ pub trait DataComponentImpl: Send + Sync {
 pub fn read_data(id: DataComponent, data: &NbtTag) -> Option<Box<dyn DataComponentImpl>> {
     match id {
         MaxStackSize => Some(MaxStackSizeImpl::read_data(data)?.to_dyn()),
+        ItemModel => Some(ItemModelImpl::read_data(data)?.to_dyn()),
         Enchantments => Some(EnchantmentsImpl::read_data(data)?.to_dyn()),
         Damage => Some(DamageImpl::read_data(data)?.to_dyn()),
         Unbreakable => Some(UnbreakableImpl::read_data(data)?.to_dyn()),
@@ -190,8 +191,24 @@ pub struct ItemNameImpl {
 impl DataComponentImpl for ItemNameImpl {
     default_impl!(ItemName);
 }
-#[derive(Clone, Hash, PartialEq, Eq)]
-pub struct ItemModelImpl;
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub struct ItemModelImpl {
+    pub model: String,
+}
+impl ItemModelImpl {
+    fn read_data(data: &NbtTag) -> Option<Self> {
+        data.extract_string().map(|s| Self { model: s.to_string() })
+    }
+}
+impl DataComponentImpl for ItemModelImpl {
+    fn write_data(&self) -> NbtTag {
+        NbtTag::String(self.model.clone())
+    }
+    fn get_hash(&self) -> i32 {
+        get_str_hash(&self.model) as i32
+    }
+    default_impl!(ItemModel);
+}
 #[derive(Clone, Hash, PartialEq, Eq)]
 pub struct LoreImpl;
 #[derive(Clone, Hash, PartialEq, Eq)]
