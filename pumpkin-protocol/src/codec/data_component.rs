@@ -6,6 +6,7 @@ use pumpkin_data::data_component_impl::{
     FireworksImpl, ItemModelImpl, MaxStackSizeImpl, PotionContentsImpl, StatusEffectInstance,
     UnbreakableImpl, get,
 };
+use pumpkin_nbt::tag::NbtTag;
 use serde::de;
 use serde::de::SeqAccess;
 use serde::ser::SerializeStruct;
@@ -455,7 +456,17 @@ pub fn serialize<T: SerializeStruct>(
 ) -> Result<(), T::Error> {
     match id {
         DataComponent::MaxStackSize => get::<MaxStackSizeImpl>(value).serialize(seq),
-        DataComponent::ItemModel => get::<ItemModelImpl>(value).serialize(seq),
+        DataComponent::ItemModel => {
+            // Try downcast first (works when created in the same binary).
+            // Fall back to write_data() for cdylib plugins where TypeId differs.
+            if let Some(v) = value.as_any().downcast_ref::<ItemModelImpl>() {
+                v.serialize(seq)
+            } else if let NbtTag::String(model) = value.write_data() {
+                seq.serialize_field::<String>("", &model)
+            } else {
+                panic!("ItemModel write_data() did not return NbtTag::String")
+            }
+        }
         DataComponent::Enchantments => get::<EnchantmentsImpl>(value).serialize(seq),
         DataComponent::Damage => get::<DamageImpl>(value).serialize(seq),
         DataComponent::Unbreakable => get::<UnbreakableImpl>(value).serialize(seq),
