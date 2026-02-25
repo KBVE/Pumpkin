@@ -3,7 +3,7 @@ use pumpkin_data::Enchantment;
 use pumpkin_data::data_component::DataComponent;
 use pumpkin_data::data_component_impl::{
     CustomNameImpl, DamageImpl, DataComponentImpl, EnchantmentsImpl, FireworkExplosionImpl,
-    FireworkExplosionShape, FireworksImpl, ItemModelImpl, MaxStackSizeImpl, PotionContentsImpl,
+    FireworkExplosionShape, FireworksImpl, ItemModelImpl, MaxDamageImpl, MaxStackSizeImpl, PotionContentsImpl,
     StatusEffectInstance, UnbreakableImpl, get,
 };
 use pumpkin_util::text::TextComponent;
@@ -43,6 +43,19 @@ impl DataComponentCodec<Self> for DamageImpl {
             .ok_or(de::Error::custom("No damage VarInt!"))?
             .0;
         Ok(Self { damage })
+    }
+}
+
+impl DataComponentCodec<Self> for MaxDamageImpl {
+    fn serialize<T: SerializeStruct>(&self, seq: &mut T) -> Result<(), T::Error> {
+        seq.serialize_field::<VarInt>("", &VarInt::from(self.max_damage))
+    }
+    fn deserialize<'a, A: SeqAccess<'a>>(seq: &mut A) -> Result<Self, A::Error> {
+        let max_damage = seq
+            .next_element::<VarInt>()?
+            .ok_or(de::Error::custom("No max_damage VarInt!"))?
+            .0;
+        Ok(Self { max_damage })
     }
 }
 
@@ -456,6 +469,7 @@ pub fn deserialize<'a, A: SeqAccess<'a>>(
         DataComponent::CustomName => Ok(CustomNameImpl::deserialize(seq)?.to_dyn()),
         DataComponent::Enchantments => Ok(EnchantmentsImpl::deserialize(seq)?.to_dyn()),
         DataComponent::Damage => Ok(DamageImpl::deserialize(seq)?.to_dyn()),
+        DataComponent::MaxDamage => Ok(MaxDamageImpl::deserialize(seq)?.to_dyn()),
         DataComponent::Unbreakable => Ok(UnbreakableImpl::deserialize(seq)?.to_dyn()),
         DataComponent::PotionContents => Ok(PotionContentsImpl::deserialize(seq)?.to_dyn()),
         DataComponent::FireworkExplosion => Ok(FireworkExplosionImpl::deserialize(seq)?.to_dyn()),
@@ -493,6 +507,7 @@ pub fn serialize<T: SerializeStruct>(
         }
         DataComponent::Enchantments => get::<EnchantmentsImpl>(value).serialize(seq),
         DataComponent::Damage => get::<DamageImpl>(value).serialize(seq),
+        DataComponent::MaxDamage => get::<MaxDamageImpl>(value).serialize(seq),
         DataComponent::Unbreakable => get::<UnbreakableImpl>(value).serialize(seq),
         DataComponent::PotionContents => get::<PotionContentsImpl>(value).serialize(seq),
         DataComponent::FireworkExplosion => get::<FireworkExplosionImpl>(value).serialize(seq),
