@@ -2419,7 +2419,6 @@ impl Player {
     }
 
     pub async fn add_effect(&self, effect: Effect) {
-        self.send_effect(effect.clone()).await;
         self.living_entity.add_effect(effect).await;
     }
 
@@ -2430,6 +2429,10 @@ impl Player {
         }
     }
 
+    /**
+     * Send a clientside only effect to the player.
+     * It won't be tracked on the server.
+     */
     pub async fn send_effect(&self, effect: Effect) {
         let mut flag: i8 = 0;
 
