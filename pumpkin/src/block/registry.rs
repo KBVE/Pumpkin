@@ -14,6 +14,7 @@ use crate::block::blocks::chests::{ChestBlock, CopperChestBlock, TrappedChestBlo
 use crate::block::blocks::chiseled_bookshelf::ChiseledBookshelfBlock;
 use crate::block::blocks::command::CommandBlock;
 use crate::block::blocks::composter::ComposterBlock;
+use crate::block::blocks::conduit::ConduitBlock;
 use crate::block::blocks::dirt_path::DirtPathBlock;
 use crate::block::blocks::doors::DoorBlock;
 use crate::block::blocks::end_portal::EndPortalBlock;
@@ -54,7 +55,7 @@ use crate::block::blocks::plant::crop::wheat::WheatBlock;
 use crate::block::blocks::plant::dry_vegetation::DryVegetationBlock;
 use crate::block::blocks::plant::flower::FlowerBlock;
 use crate::block::blocks::plant::flowerbed::FlowerbedBlock;
-use crate::block::blocks::plant::fungus::Fungus;
+use crate::block::blocks::plant::fungus::FungusBlock;
 use crate::block::blocks::plant::kelp::KelpBlock;
 use crate::block::blocks::plant::leaf_litter::LeafLitterBlock;
 use crate::block::blocks::plant::lily_pad::LilyPadBlock;
@@ -68,12 +69,13 @@ use crate::block::blocks::plant::short_plant::ShortPlantBlock;
 use crate::block::blocks::plant::spore_blossom::SporeBlossomBlock;
 use crate::block::blocks::plant::sugar_cane::SugarCaneBlock;
 use crate::block::blocks::plant::tall_plant::TallPlantBlock;
-use crate::block::blocks::plant::wither_rose::WitherRose;
+use crate::block::blocks::plant::wither_rose::WitherRoseBlock;
 use crate::block::blocks::powder_snow::PowderSnowBlock;
 use crate::block::blocks::pumpkin::PumpkinBlock;
 use crate::block::blocks::redstone::buttons::ButtonBlock;
 use crate::block::blocks::redstone::comparator::ComparatorBlock;
 use crate::block::blocks::redstone::copper_bulb::CopperBulbBlock;
+use crate::block::blocks::redstone::daylight_detector::DaylightDetectorBlock;
 use crate::block::blocks::redstone::dispenser::DispenserBlock;
 use crate::block::blocks::redstone::dropper::DropperBlock;
 use crate::block::blocks::redstone::lever::LeverBlock;
@@ -256,10 +258,11 @@ pub fn default_registry() -> Arc<BlockRegistry> {
     manager.register(MangroveRootsBlock);
     manager.register(LayeredSnowBlock);
     manager.register(CobwebBlock);
-    manager.register(WitherRose);
-    manager.register(Fungus);
+    manager.register(WitherRoseBlock);
+    manager.register(FungusBlock);
     manager.register(NetherSproutsBlock);
     manager.register(SporeBlossomBlock);
+    manager.register(ConduitBlock);
 
     manager.register(FallingBlock);
 
@@ -294,6 +297,7 @@ pub fn default_registry() -> Arc<BlockRegistry> {
     manager.register(DropperBlock);
     manager.register(DispenserBlock);
     manager.register(LadderBlock);
+    manager.register(DaylightDetectorBlock);
 
     // Rails
     manager.register(RailBlock);

@@ -841,10 +841,14 @@ impl LivingEntity {
 
         let mut velo = self.entity.velocity.load();
 
-        // TODO: Add powdered snow
+        let can_powder_snow_climb = if self.entity.was_in_powder_snow.load(Relaxed) {
+            crate::block::blocks::powder_snow::can_entity_walk_on_powder_snow(caller.as_ref()).await
+        } else {
+            false
+        };
 
         if (self.entity.horizontal_collision.load(SeqCst) || self.jumping.load(SeqCst))
-            && (self.climbing.load(Relaxed))
+            && (self.climbing.load(Relaxed) || can_powder_snow_climb)
         {
             velo.y = 0.2;
         }
@@ -880,7 +884,7 @@ impl LivingEntity {
 
     async fn travel_in_fluid(&self, caller: Arc<dyn EntityBase>, water: bool) {
         let movement_input = self.movement_input.load();
-        let y0 = self.entity.pos.load().y;
+
         let falling = self.entity.velocity.load().y <= 0.0;
         let gravity = self.get_effective_gravity(&caller).await;
         let effective_speed = self.get_attribute_value(&Attributes::MOVEMENT_SPEED);
@@ -950,8 +954,6 @@ impl LivingEntity {
         }
 
         let mut velo = self.entity.velocity.load();
-
-        velo.y += 0.6 - self.entity.pos.load().y + y0;
 
         if self.entity.horizontal_collision.load(SeqCst)
             && !self
@@ -1791,6 +1793,8 @@ impl EntityBase for LivingEntity {
         cause: Option<&'a dyn EntityBase>,
     ) -> EntityBaseFuture<'a, bool> {
         Box::pin(async move {
+            let mut amount = amount;
+
             // Check invulnerability before applying damage
             if self.entity.is_invulnerable_to(&damage_type) {
                 return false;
@@ -1823,6 +1827,16 @@ impl EntityBase for LivingEntity {
                 if self.has_effect(&StatusEffect::FIRE_RESISTANCE).await {
                     return false;
                 }
+            }
+
+            // Vanilla parity: entities in FREEZE_HURTS_EXTRA_TYPES take 5x freezing damage.
+            if damage_type == DamageType::FREEZE
+                && self
+                    .entity
+                    .entity_type
+                    .has_tag(&tag::EntityType::MINECRAFT_FREEZE_HURTS_EXTRA_TYPES)
+            {
+                amount *= 5.0;
             }
 
             // These damage types bypass the hurt cooldown and death protection
@@ -1985,8 +1999,14 @@ impl EntityBase for LivingEntity {
 
             // Only tick movement if the entity is alive. This prevents a dead "corpse"
             // from continuing to be simulated (accumulating fall_distance/velocity).
-            if !self.dead.load(Relaxed) && self.health.load() > 0.0 {
+            // We allow movement during death animation (20 ticks) so knockback is applied.
+            let is_alive = !self.dead.load(Relaxed) && self.health.load() > 0.0;
+            let in_death_animation =
+                self.health.load() <= 0.0 && self.death_time.load(Relaxed) < 20;
+            if is_alive || (in_death_animation && self.entity.entity_type != &EntityType::PLAYER) {
                 self.tick_movement(server, caller.clone()).await;
+                // Vanilla-like order: freeze logic runs after movement/collisions.
+                self.entity.tick_frozen(caller.as_ref()).await;
             }
 
             // TODO

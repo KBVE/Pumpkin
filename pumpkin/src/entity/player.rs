@@ -310,7 +310,7 @@ impl ChunkManager {
         self.last_chunk_batch_sent_at = Instant::now();
     }
 
-    pub fn handle_acknowledge(&mut self, chunks_per_tick: f32) {
+    pub const fn handle_acknowledge(&mut self, chunks_per_tick: f32) {
         self.batches_sent_since_ack = BatchState::Count(0);
         self.chunks_per_tick = chunks_per_tick.ceil() as usize;
     }
@@ -1490,6 +1490,10 @@ impl Player {
         }
 
         self.tick_counter.fetch_add(1, Ordering::Relaxed);
+        self.living_entity
+            .entity
+            .age
+            .fetch_add(1, Ordering::Relaxed);
         if let Some(sleeping_since) = self.sleeping_since.load()
             && sleeping_since < 101
         {
@@ -3039,19 +3043,19 @@ impl NBTStorage for PlayerInventory {
                     drop(stack);
                     match slot {
                         EquipmentSlot::OffHand(_) => {
-                            equipment_compound.put_component("offhand", item_compound);
+                            equipment_compound.put_compound("offhand", item_compound);
                         }
                         EquipmentSlot::Feet(_) => {
-                            equipment_compound.put_component("feet", item_compound);
+                            equipment_compound.put_compound("feet", item_compound);
                         }
                         EquipmentSlot::Legs(_) => {
-                            equipment_compound.put_component("legs", item_compound);
+                            equipment_compound.put_compound("legs", item_compound);
                         }
                         EquipmentSlot::Chest(_) => {
-                            equipment_compound.put_component("chest", item_compound);
+                            equipment_compound.put_compound("chest", item_compound);
                         }
                         EquipmentSlot::Head(_) => {
-                            equipment_compound.put_component("head", item_compound);
+                            equipment_compound.put_compound("head", item_compound);
                         }
                         _ => {
                             warn!("Invalid equipment slot for a player");
@@ -3059,7 +3063,7 @@ impl NBTStorage for PlayerInventory {
                     }
                 }
             }
-            nbt.put_component("equipment", equipment_compound);
+            nbt.put_compound("equipment", equipment_compound);
             nbt.put("Inventory", NbtTag::List(items));
         })
     }
@@ -3352,7 +3356,7 @@ impl NBTStorage for Abilities {
             component.put_bool("mayBuild", self.allow_modify_world);
             component.put_float("flySpeed", self.fly_speed);
             component.put_float("walkSpeed", self.walk_speed);
-            nbt.put_component("abilities", component);
+            nbt.put_compound("abilities", component);
         })
     }
 
